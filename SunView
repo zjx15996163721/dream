@@ -1,0 +1,554 @@
+//
+//  SunView.swift
+//  MyPointer
+//
+//  Created by sj on 2018/8/19.
+//  Copyright © 2018 Apple. All rights reserved.
+//
+
+import UIKit
+import OpenGLES
+import GLKit
+
+
+
+
+class SunView: GLKView {
+    
+    let vertices: Array<GLfloat> = [
+        -0.5, -0.5,
+        0.5, -0.5,
+        0.5, 0.5,
+        -0.5, 0.5]
+    let colors: Array<GLfloat> = [
+        1.0, 0.0, 0.0, 1.0,
+        0, 1, 0, 1,
+        0, 0, 1, 1,
+        0, 0, 0, 1]
+    let uvs: Array<GLfloat> = [
+        0.0, 0.0,
+        1.0, 0.0,
+        1.0, 1.0,
+        0.0, 1.0
+    ]
+ 
+    let indices: Array<GLuint> = [0, 1, 2, 3]
+    //let indices: Array<GLuint> = [0, 1, 2, 2, 3, 0]
+    
+    /*
+    let vertices: Array<GLfloat> = [
+        -0.5, -0.5,     1.0, 0.0, 0.0, 1.0,
+        0.5, -0.5,      0.0, 1.0, 0.0, 1.0,
+        0.5, 0.5,       0.0, 0.0, 1.0, 1.0,
+        -0.5, 0.5,      0.0, 0.0, 0.0, 1.0]*/
+
+
+    var vs: String = "#version 100  \n" +
+    "precision highp float;         \n" +
+    "attribute vec2 position;       \n" +
+    "attribute vec4 color;          \n" +
+    "varying vec4 fragColor;        \n" +
+    "attribute vec2 texCoord;       \n" +
+    "varying vec2 uv;               \n" +
+    "void main() {                  \n" +
+    "gl_Position = vec4(position, 0.0, 1.0); \n" +
+    "fragColor = color;             \n" +
+    "uv = texCoord;                 \n" +
+    "}"
+
+    
+    
+    var fs: String = "#version 100  \n" +
+    "precision highp float;         \n" +
+    "varying vec4 fragColor;        \n" +
+    "uniform float showTex;         \n" +
+    "uniform sampler2D tex;         \n" +
+    "varying vec2 uv;               \n" +
+    "uniform float time;            \n" +
+    "void main() {                  \n" +
+    "if (showTex == 1.0) {          \n" +
+    "gl_FragColor = texture2D(tex, uv);     \n" +
+    "} else {                       \n" +
+    "gl_FragColor = fragColor;      \n" +
+    "}                              \n" +
+    "}"
+
+    
+    
+    var effect: GLKBaseEffect?
+    var vao: GLuint = 0
+    var program: GLuint = 0
+    
+    
+    var positionSlot: GLuint?
+    var texCoordSlot: GLuint?
+    var colorSlot: GLuint?
+    var texture: GLuint = 0
+
+    var eaglayer: CAEAGLLayer!
+    struct TT {
+        var r: Float
+        var s: Float
+        var h: Float
+    }
+    struct PP {
+        var tt: TT
+        var v: UnsafeMutablePointer<Float>
+        var w: UnsafeMutablePointer<Float>
+    }
+    
+    var cylind: Cylinder?
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+         backgroundColor = UIColor.green
+         setupContext()
+        let options: dOptions = dOptions(radius: 1, slice: 8, height: 2)
+       
+      
+       
+        
+        let cylinder: UnsafeMutablePointer<dCylinder> = getVertices(options)
+        
+        NSLog("ggg=%d\n", cylinder.pointee.options.radius)
+        NSLog("ggg=%d\n", cylinder.pointee.options.slice)
+       
+        NSLog("ggg=%d\n", cylinder.pointee.options.height)
+        
+        
+        var vertices: UnsafeMutablePointer<Float> = cylinder.pointee.vertices
+        var bitangles: UnsafeMutablePointer<Float> = cylinder.pointee.bitangles
+        var tangles: UnsafeMutablePointer<Float> = cylinder.pointee.tangles
+        var normals: UnsafeMutablePointer<Float> = cylinder.pointee.normals
+        var uvs: UnsafeMutablePointer<Float> = cylinder.pointee.uvs
+        /*
+        NSLog("ggg=%f\n", cylinder.pointee.vertices.pointee)
+        
+        let vSize: Int32 = cylinder.pointee.vSize
+        NSLog("ggg=%d\n", vSize)
+        let uSize: Int32 = cylinder.pointee.uSize
+        NSLog("ggg=%d\n", uSize)
+         NSLog("ggg=%f\n", cylinder.pointee.normals.pointee)
+         NSLog("ggg=%f\n", cylinder.pointee.bitangles.pointee)
+        NSLog("ggg=%f\n", cylinder.pointee.uvs.pointee)
+        NSLog("ggg=%f\n", cylinder.pointee.tangles.pointee)
+ */
+        setupView()
+
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+
+    
+    func setupView() {
+        setupContext()
+        setupShader(vsSrc: vs, fsSrc: fs)
+        setupData()
+       //  cylind = Cylinder(sunView: self, numberOfDivisions: 8)
+       texture =  setupTexture(imageName: "result.png")
+        setupDisplay()
+        
+
+        
+    
+        //self.texture = setupTexture(imageName: "tree.jpg")
+   
+        //   mutating func replaceSubrange<C, R>(_ subrange: R, with newElements: C) where C : Collection, R :
+        
+        //RangeExpression, Element == C.Element, Array<Element>.Index == R.Bound
+         //NSRange(<#T##region: RangeExpression##RangeExpression#>, in: <#T##StringProtocol#>)
+        //  var str: String = "helllo我来了"
+        //  str.replacingCharacters(in: <#T##RangeExpression#>, with: <#T##StringProtocol#>)
+        // var nums = [10, 20, 30, 40, 50]
+       // nums.replaceSubrange(1...3, with: repeatElement(1, count: 5))
+       // print(nums)
+        // Prints "[10, 1, 1, 1, 1, 1, 50]"
+    }
+    
+    
+    
+
+    func setupContext(){
+        context = EAGLContext.init(api: EAGLRenderingAPI.openGLES2)!
+        EAGLContext.setCurrent(self.context)
+    }
+    
+    
+    //glkView内置了这些
+    /*
+     override class var layerClass : AnyClass {
+        return CAEAGLLayer.self
+     }
+     
+     func setupCanvas() {
+        //layer
+        eaglayer = self.layer as! CAEAGLLayer
+        eaglayer.isOpaque = true
+     
+        //rbo
+        var rbo: GLuint = 0
+        glGenRenderbuffers(1, &rbo)
+        glBindRenderbuffer(GLenum(GL_RENDERBUFFER), rbo)
+        context.renderbufferStorage(Int(GL_RENDERBUFFER), from: eaglayer)
+        
+        //fbo
+        var fbo: GLuint = 0
+        glGenFramebuffers(1, &fbo)
+        glBindFramebuffer(GLenum(GL_FRAMEBUFFER), fbo)
+        glFramebufferRenderbuffer(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), GLenum(GL_RENDERBUFFER), rbo)
+     }
+ */
+    
+    
+    func setupShader(vsSrc: String, fsSrc: String) {
+        
+        //1
+        program = glCreateProgram()
+        if program == 0 {
+            NSLog("Program creation failed")
+            return
+        }
+       
+        
+        
+        //2
+        if let shader = compileShader(vsSrc, type: GLenum(GL_VERTEX_SHADER))
+        {
+            glAttachShader(program, shader)
+            
+            // We can safely delete the shader now - it won't
+            // actually be destroyed until the program that it's
+            // attached to has been destroyed.
+            glDeleteShader(shader)
+        } else {
+            print("vertex shader is nil")
+            return
+        }
+        
+        if let shader = compileShader(fsSrc, type: GLenum(GL_FRAGMENT_SHADER))
+        {
+            glAttachShader(program, shader)
+            glDeleteShader(shader)
+        } else {
+            print("fragment shader is nil")
+            return
+        }
+        
+        
+        //3
+        glLinkProgram(program)
+        
+        var success: GLint = 0
+        glGetProgramiv(program, GLenum(GL_LINK_STATUS), &success)
+        if(success == GL_FALSE)
+        {
+            print("Failed to create program!")
+            
+            // TODO: Actually output the error that we can get from the glGetProgramInfoLog function.
+            var infoLen: GLint = GLint(0);
+            glGetProgramiv(program, GLenum(GL_INFO_LOG_LENGTH), &infoLen)
+            if infoLen > 0
+            {
+                let info: UnsafeMutablePointer<GLchar> = UnsafeMutablePointer<GLchar>.allocate(capacity: Int(infoLen))
+                var length: GLsizei = GLsizei()
+                glGetProgramInfoLog(program, GLsizei(infoLen), &length, info)
+                print(String(utf8String: info) ?? "")
+                
+                glDeleteProgram(program)
+                return
+            }
+        }
+        
+        useProgram()
+    }
+    
+    
+    
+    fileprivate func isFile(pattern:String, str:String) -> Bool {
+    
+        let regex = try! NSRegularExpression(pattern: pattern, options:[])
+        let matches = regex.matches(in: str, options: [], range: NSRange(str.startIndex..., in: str))
+        for match in matches {
+            let ext: String? = String(str[Range(match.range(at: 0), in: str)!])
+            guard ext == nil else {
+                print("ok")
+                return true }
+        }
+        print("err")
+        return false
+    }
+    
+    
+    fileprivate func readFile(fileName: String) -> String? {
+        if !isFile(pattern: "\\.glsl$", str: fileName)
+        {
+            print("not filename")
+            return nil
+        }
+        do {
+            print("is filename")
+            // var shaderPath: String! = NSBundle.mainBundle().pathForResource(shaderName, ofType: "glsl")
+            let filePath = Bundle.main.resourcePath! + "/" + fileName
+          
+            let fileContent  = try String(contentsOfFile: filePath)
+            return fileContent
+         //   let a  =  try NSString(contentsOfFile: path, encoding: String.Encoding.utf8.rawValue) as String
+        } catch {
+            print("read file error")
+            return nil
+        }
+    }
+    
+    
+    fileprivate func compileShader(_ src: String, type: GLenum) -> GLuint? {
+
+        let _srcFileContent: String? = readFile(fileName: src)
+        var source: UnsafePointer<Int8>?
+
+        if let srcFileContent = _srcFileContent
+        {
+            source = NSString(string: srcFileContent).utf8String
+        } else {
+            source = NSString(string: src).utf8String
+        }
+        
+        let shader = glCreateShader(type)
+        glShaderSource(shader, 1, &source, nil)
+        glCompileShader(shader)
+        
+        
+        var status: GLint = GLint()
+        glGetShaderiv(shader, GLenum(GL_COMPILE_STATUS), &status)
+      
+        if(status == GL_FALSE) {
+            var len: GLint = 0
+            glGetShaderiv(shader, GLenum(GL_INFO_LOG_LENGTH), &len)
+          
+            var infoLog: [GLchar] = [GLchar].init(repeating: 0, count: Int(len))
+            var infoLength: GLsizei = 0
+            glGetShaderInfoLog(shader, len, &infoLength, &infoLog)
+           
+            let info = NSString(bytes: infoLog, length: Int(infoLength), encoding: String.Encoding.ascii.rawValue)
+           
+            glDeleteShader(shader)
+            
+            print("vertexShader compile err : \(String(describing: info))")
+            return nil
+        }
+        return shader
+    }
+    
+    
+    fileprivate func useProgram(){
+        if program != 0 {
+            print("program is used\n")
+            glUseProgram(program)
+        }
+    }
+    
+    
+    func setupData() {
+        //1 - vao
+        glGenVertexArrays(1, &vao)
+        glBindVertexArray(vao)
+        
+        getParameters()
+
+        //pos
+        var vbo: [GLuint] = Array<GLuint>(repeating: 0, count: 4)
+        glGenBuffers(4, &vbo)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo[0])
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * vertices.count), vertices, GLenum(GL_STATIC_DRAW))
+
+        if let positionSlot = self.positionSlot  {
+            glEnableVertexAttribArray(positionSlot)
+            glVertexAttribPointer(positionSlot, 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE),  GLsizei(MemoryLayout<GLfloat>.size * 2), UnsafeRawPointer(bitPattern: 0))
+        }
+        
+        
+        //colors
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo[1])
+        glBufferData(GLenum(GL_ARRAY_BUFFER), MemoryLayout<GLfloat>.size * colors.count, colors, GLenum(GL_STATIC_DRAW))
+        
+        if let colorSlot = colorSlot {
+            glEnableVertexAttribArray(colorSlot)
+            glVertexAttribPointer(colorSlot, 4, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GLfloat>.size * 4), UnsafeRawPointer(bitPattern: 0))
+        }
+        
+        
+        //uv
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo[2])
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * uvs.count), uvs, GLenum(GL_STATIC_DRAW))
+ /*
+        if let texCoordSlot = texCoordSlot {
+            glEnableVertexAttribArray(texCoordSlot)
+            glVertexAttribPointer(texCoordSlot, 2, GLenum(GL_FALSE), GLboolean(GL_FALSE), GLsizei(MemoryLayout<GLfloat>.size * 2), UnsafeRawPointer(bitPattern: 0))
+        }
+        
+        */
+        
+        //index
+        glBindBuffer(GLenum(GL_ELEMENT_ARRAY_BUFFER), vbo[3])
+        glBufferData(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLuint>.size * indices.count), indices, GLenum(GL_STATIC_DRAW))
+    
+        
+        var status: GLint = 0
+        glGetBufferParameteriv(GLenum(GL_ELEMENT_ARRAY_BUFFER), GLenum(GL_BUFFER_USAGE), &status)
+        print(status)
+    }
+    
+
+    
+  public func getAttribLocation(_ name: String) -> GLuint? {
+        
+        //可能返回-1， GLuint转换会报错
+        //原因1: 定义了但没使用，着色器优化掉了
+        //原因2: 没定义
+        let t = glGetAttribLocation(program, name.cString(using: String.Encoding.utf8))
+        print(name, "Slot----", t)
+        return t == -1 ? nil : GLuint(t)
+    }
+    
+    
+    public func getUniformbLocation(_ name: String) -> GLuint? {
+        let t = glGetUniformLocation(program, name.cString(using: String.Encoding.utf8))
+        return t == -1 ? nil : GLuint(t)
+    }
+    
+    
+    func getParameters()
+    {
+        self.positionSlot = getAttribLocation("position")
+        self.colorSlot = getAttribLocation("color")
+        self.texCoordSlot = getAttribLocation("texCoord")
+    }
+    
+    
+    func loadUniform()
+    {
+        //glActiveTexture(UInt32(GL_TEXTURE0))
+        
+        
+        // if let videoTextureIDValue = videoTextureID as GLuint?  {
+        //     glBindTexture( GLenum (GL_TEXTURE_2D), videoTextureIDValue)
+        
+        //   glUniform1i( GLint(textureUniform), 0)
+        //   }
+        
+        // Incriment and pass time to shader. This is experimental, be sure to fully test any use of this variable.
+        //   time += Float(displayLink.duration)
+        //  glUniform1f( GLint (timeUniform), time)
+        
+        //  glUniform1f( GLint (showShaderBoolUniform), showShader)
+        //
+        
+        //context.presentRenderbuffer(Int(GL_RENDERBUFFER))
+    }
+
+    func  loadTexture(textureSlot: GLuint, imageName: String, imageName1: String) {
+            var  texture = setupTexture(imageName: imageName)
+            glActiveTexture(GLenum(GL_TEXTURE0))
+            glBindTexture(GLenum(GL_TEXTURE_2D), texture)
+            glUniform1i(GLint(textureSlot), 1);
+        
+           texture = setupTexture(imageName: imageName1)
+            glActiveTexture(GLenum(GL_TEXTURE0))
+            glBindTexture(GLenum(GL_TEXTURE_2D), texture)
+            glUniform1i(GLint(textureSlot), 2);
+        
+    }
+
+    
+    
+    func setupTexture(imageName: String) -> GLuint {
+        var texture: GLuint = GLuint()
+        let imageView: UIImageView = UIImageView(frame: CGRect(x: 10, y: 100, width: 200, height: 200))
+       let image: UIImage = UIImage(named: "result.png")!
+        imageView.image  = image
+        addSubview(imageView)
+        
+        let path = Bundle.main.resourcePath! + "/" + imageName
+        let spriteImage: CGImage? = UIImage(named: path)?.cgImage
+       
+        if let spriteImageValue = spriteImage {
+            let width = spriteImageValue.width
+            let height = spriteImageValue.height
+            let size = width  * height * 4
+         let spriteData: UnsafeMutablePointer<GLubyte> = UnsafeMutablePointer<GLubyte>.allocate(capacity: size)
+            
+            
+            let bitmapInfo: CGBitmapInfo = CGBitmapInfo.init(rawValue: CGImageAlphaInfo.premultipliedFirst.rawValue)
+            let spriteContext: CGContext = CGContext.init(data: spriteData, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4 , space: spriteImageValue.colorSpace!, bitmapInfo: bitmapInfo.rawValue)!
+         
+            spriteContext.draw(spriteImageValue, in: CGRect(x: 0, y: 0, width: CGFloat(width) , height: CGFloat(height)))
+            
+          
+            glActiveTexture(GLenum(GL_TEXTURE0))
+            glGenTextures(1, &texture)
+            glBindTexture(GLenum(GL_TEXTURE_2D), texture)
+            glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GLint(GL_LINEAR))
+            glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLint(GL_LINEAR))
+            glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_R), GLint(GL_CLAMP_TO_EDGE))
+            glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_R), GLint(GL_CLAMP_TO_EDGE))
+          
+           
+            
+            glTexImage2D(GLenum(GL_TEXTURE_2D), 0, GL_RGBA, GLsizei(width), GLsizei(height), 0, GLenum(GL_RGBA), UInt32(GL_UNSIGNED_BYTE), spriteData)
+            free(spriteData)
+            
+        } else
+        {
+            print("Failed to load image!")
+            exit(1)
+            
+        }
+        
+        return texture
+        
+    }
+
+
+    func setupDisplay() {
+        let displayLink: CADisplayLink = CADisplayLink(target: self, selector: #selector(render))
+        //displayLink.preferredFramesPerSecond = 60
+        let runLoop: RunLoop = RunLoop.current
+        displayLink.add(to: runLoop, forMode: RunLoopMode.defaultRunLoopMode)
+    }
+
+    
+    @objc func render() {
+        
+        //remove these 2, you'll get flash
+        glClearColor(1, 0, 1, 1)
+        glClear(GLbitfield(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+        
+        
+        //viewport
+        var width: GLint = 0
+        var height: GLint = 0
+        glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_WIDTH), &width)
+        glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_HEIGHT), &height)
+        glViewport(0, 0, GLint(width), GLint(height));
+        
+      // cylind?.render()
+       glBindVertexArray(vao)
+       glDrawArrays(GLenum(GL_TRIANGLE_FAN), 0, GLsizei(vertices.count))
+      //  glDrawElements(GLenum(GL_TRIANGLE_FAN), GLsizei(indices.count), GLenum(GL_UNSIGNED_INT), UnsafeRawPointer(bitPattern: 0))
+      //  glDrawElements(GLenum(GL_TRIANGLE_STRIP), GLsizei(indices.count), GLenum(GL_UNSIGNED_INT), nil)
+       // glDrawElements(GLenum(GL_TRIANGLES), GLsizei(indices.count), GLenum(GL_UNSIGNED_INT), UnsafeRawPointer(bitPattern: 0))
+        self.context.presentRenderbuffer(Int(GL_RENDERBUFFER))
+        
+        //print("render in SunView \n")
+        //  glBindVertexArray(vertexArrayId)
+        glBindVertexArray(0)
+    }
+    
+    
+    override func draw(_ rect: CGRect) {
+        super.draw(rect)
+        glClearColor(0, 1, 1, 1)
+       glClear(GLbitfield(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT))
+    }
+}
