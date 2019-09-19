@@ -1,5 +1,3 @@
-print(__name__)
-print('```````````')
 import os
 import logging
 import platform
