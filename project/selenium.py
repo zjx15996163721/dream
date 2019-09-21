@@ -100,7 +100,7 @@ class Verification:
         print(str_cookie)
         # todo 将cookie传入爬虫代码
         s = Spider(str_cookie)
-        s.start_crawler()
+        s.start()
 
 
 if __name__ == '__main__':
