@@ -49,7 +49,6 @@ class Spider:
             '__EVENTTARGET': 'pagerBottomNew$btnNum' + str(page),
             '__VIEWSTATE': VIEWSTART,
             'pagerTopNew$ctl06': '50',
-            'hidAccessKey': '87589d62af294ca',
             'hid_posttime': '180',
         }
         self.request_next_page(data, page, max_page)
@@ -60,7 +59,6 @@ class Spider:
             '__EVENTTARGET': 'pagerBottomNew$btnNum4',
             '__VIEWSTATE': VIEWSTART,
             'pagerTopNew$ctl06': '50',
-            # 'hidAccessKey': '87589d62af294ca',
             'hid_posttime': '180',
         }
         self.request_next_page(data, page, max_page)
@@ -83,7 +81,7 @@ class Spider:
             time.sleep(1)
         print(VIEWSTART)
         # 延迟请求，防止被封IP
-        time.sleep(1)
+        time.sleep(5)
         self.count += 1
         if self.count > max_page:
             sys.exit()
