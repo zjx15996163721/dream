@@ -2,12 +2,9 @@ import requests
 from lxml import etree
 import time
 import sys
-from pymongo import MongoClient
 from lib.log import LogHandler
 from project.parse import Parse
 log = LogHandler(__name__)
-m = MongoClient(host='192.168.99.100', port=27017)
-collection = m['project']['51job_resume']
 
 
 class Spider:
@@ -40,14 +37,12 @@ class Spider:
         user_links = tree.xpath("//input[@id='chkBox']")
         for link in user_links:
             user_id = link.xpath('@value1')[0]
-            # 根据ID 去重
-            if not collection.find_one({'ID': user_id}):
-                url = 'https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx?hidSeqID=' + user_id + '&hidFolder=EMP&pageCode=24'
-                log.info(url)
-                p = Parse(self.cookie)
-                p.start('https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx', user_id)
-            else:
-                log.info('重复数据')
+            # todo 根据ID 去重
+            url = 'https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx?hidSeqID=' + user_id + '&hidFolder=EMP&pageCode=24'
+            log.info(url)
+            p = Parse(self.cookie)
+            p.start('https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx', user_id)
+
         self.count += 1
         self.small_six_page_params(VIEWSTART, 2, int(max_page))
 
@@ -103,15 +98,12 @@ class Spider:
         user_links = tree.xpath("//input[@id='chkBox']")
         for link in user_links:
             user_id = link.xpath('@value1')[0]
-            # 根据ID 去重
-            if not collection.find_one({'ID': user_id}):
-                url = 'https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx?hidSeqID=' + user_id + '&hidFolder=EMP&pageCode=24'
-                log.info(url)
-                # 请求解析
-                p = Parse(self.cookie)
-                p.start('https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx', user_id)
-            else:
-                log.info('重复数据')
+            # todo 根据ID 去重
+            url = 'https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx?hidSeqID=' + user_id + '&hidFolder=EMP&pageCode=24'
+            log.info(url)
+            # 请求解析
+            p = Parse(self.cookie)
+            p.start('https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx', user_id)
         print(VIEWSTART)
         self.count += 1
         if self.count > max_page + 1:

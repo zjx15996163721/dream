@@ -77,14 +77,14 @@ class WordClick:
         self.click_word(all_position_list)
         # 点击验证
         self.click_verify()
-        time.sleep(5)
+        time.sleep(2)
         # 判断是否验证成功
         try:
-            self.wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='tdseekname']")))
+            self.driver.find_element_by_id('tdseekname')
             print('验证成功')
             time.sleep(2)
-        except TimeoutException:
-            print('再试一次')
+        except Exception as e:
+            print('再试一次 e={}'.format(e))
             # 发送报错ID
             self.client.report_error(pic_id)
             time.sleep(2)

@@ -2,12 +2,10 @@ import requests
 from lxml import etree
 import re
 import time
-from pymongo import MongoClient
+import pandas as pd
 from project.word_verification import WordClick
 from lib.log import LogHandler
 log = LogHandler(__name__)
-m = MongoClient(host='192.168.99.100', port=27017)
-collection = m['project']['51job_resume']
 
 
 class Parse:
@@ -246,8 +244,17 @@ class Parse:
                 })
 
         # 存储数据
-        collection.insert(data)
-        log.info(data)
+        # df = pd.DataFrame(data, columns=['ID', '姓名', '应聘岗位', '投递时间', '应聘公司', '匹配度', '工作状态', '电话', '邮箱', '性别',
+        #                             '年龄', '出生年月', '现居住地', '工作经验', '最近工作', '最高学历/学位', '个人信息', '目前年收入：', '求职意向',
+        #                             '项目经验', '教育经历', '在校情况', '技能特长', '操作动态', '附加信息'])
+        # # log.info(data)
+        # k = list(data.keys())
+        # v = list(data.values())
+        # df = pd.DataFrame(list(zip(k, v)), columns=['k', 'v'])
+        df = pd.DataFrame.from_dict(data, orient='index')
+        df.transpose()
+        df.to_csv('data.csv')
+        print(df)
 
     @staticmethod
     def get_more_info(two_level_info, info_list):
