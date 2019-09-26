@@ -149,7 +149,7 @@ class WordClick:
             position_str = pic_str.split('|')
             all_position_list = [[int(number) for number in group.split(',')] for group in position_str]
             print(all_position_list)
-            self.client.report_error(pic_id)
+            self.client.report_error(pic_id)    #　目前账户余额410题分，每次消耗４０题分，运行这里不消耗超级鹰的题分，最好注释掉，避免账号被封
             return all_position_list, pic_id
         else:
             self.client.report_error(pic_id)
