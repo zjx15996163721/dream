@@ -1,6 +1,5 @@
 import requests
 from lxml import etree
-import time
 import sys
 from lib.log import LogHandler
 from project.parse import Parse
@@ -37,7 +36,6 @@ class Spider:
         user_links = tree.xpath("//input[@id='chkBox']")
         for link in user_links:
             user_id = link.xpath('@value1')[0]
-            # todo 根据ID 去重
             url = 'https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx?hidSeqID=' + user_id + '&hidFolder=EMP&pageCode=24'
             log.info(url)
             p = Parse(self.cookie)
@@ -98,7 +96,6 @@ class Spider:
         user_links = tree.xpath("//input[@id='chkBox']")
         for link in user_links:
             user_id = link.xpath('@value1')[0]
-            # todo 根据ID 去重
             url = 'https://ehire.51job.com/Candidate/ResumeViewFolderV2.aspx?hidSeqID=' + user_id + '&hidFolder=EMP&pageCode=24'
             log.info(url)
             # 请求解析

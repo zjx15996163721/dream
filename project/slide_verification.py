@@ -57,11 +57,10 @@ class Verification:
         self.save_img('full.png', 'geetest_canvas_fullbg')
         cut_img = Image.open('cut.png')
         full_img = Image.open('full.png')
-        # 计算距离 需要减去距离左边的间隙 random.randint(6, 9)
-        distance = self.get_distance(cut_img, full_img) - 9
+        # 计算距离 需要减去距离左边的间隙
+        distance = self.get_distance(cut_img, full_img) - random.randint(6, 9)
         # 开始移动
         self.drag(distance)
-
         # 判断是否验证成功
         try:
             self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="geetest_slider geetest_success"]')))

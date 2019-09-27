@@ -22,7 +22,7 @@ class Parse:
         self.cookie = cookie
 
     def start(self, url, user_id):
-        global experience, gender, age, date_of_birth, residence
+        global experience, gender, age, date_of_birth, residence, one_level_info
         params = {
             'hidSeqID': user_id,
             'hidFolder': 'EMP',
@@ -205,18 +205,22 @@ class Parse:
             if len(one_level_info_name) > 0:
                 one_level_info_name = info.xpath(".//tr[1]/td[@class='plate1']/text()")[0]
                 one_level_info_name = ''.join(one_level_info_name.split())
-                one_level_info = info.xpath(".//tr[1]/td[@class='plate1']/span[1]")
-                if len(one_level_info) > 0:
-                    one_level_info = info.xpath(".//tr[1]/td[@class='plate1']/span[1]/text()")
+
+                if one_level_info_name == '目前年收入：' or '技能特长':
+                    one_level_info = info.xpath(".//tr[1]/td[@class='plate1']/span[1]")
                     if len(one_level_info) > 0:
-                        one_level_info = info.xpath(".//tr[1]/td[@class='plate1']/span[1]/text()")[0]
-                        one_level_info = ''.join(one_level_info.split())
+                        one_level_info = info.xpath(".//tr[1]/td[@class='plate1']/span[1]/text()")
+                        if len(one_level_info) > 0:
+                            one_level_info = info.xpath(".//tr[1]/td[@class='plate1']/span[1]/text()")[0]
+                            one_level_info = ''.join(one_level_info.split())
+                        else:
+                            one_level_info = ''
                     else:
                         one_level_info = ''
                 else:
                     one_level_info = ''
                 info_list = []
-                info_list.append([one_level_info])
+                info_list.append([one_level_info_name, one_level_info])
                 # 二级分类
                 # 个人信息
                 two_level_info_a = info.xpath("./tbody/tr[2]/td[1]/table[1]/tbody/tr/td/table[1]/tbody[1]/tr")
@@ -244,16 +248,9 @@ class Parse:
                 })
 
         # 存储数据
-        # df = pd.DataFrame(data, columns=['ID', '姓名', '应聘岗位', '投递时间', '应聘公司', '匹配度', '工作状态', '电话', '邮箱', '性别',
-        #                             '年龄', '出生年月', '现居住地', '工作经验', '最近工作', '最高学历/学位', '个人信息', '目前年收入：', '求职意向',
-        #                             '项目经验', '教育经历', '在校情况', '技能特长', '操作动态', '附加信息'])
-        # # log.info(data)
-        # k = list(data.keys())
-        # v = list(data.values())
-        # df = pd.DataFrame(list(zip(k, v)), columns=['k', 'v'])
-        df = pd.DataFrame.from_dict(data, orient='index')
+        df = pd.DataFrame.from_dict(data, orient='index', columns=['value'])
         df.transpose()
-        df.to_csv('data.csv')
+        df.to_csv('data.csv', mode='a')
         print(df)
 
     @staticmethod
@@ -281,3 +278,11 @@ if __name__ == '__main__':
 
 
 
+"""
+'ID', '姓名', '应聘岗位', '投递时间', '应聘公司',
+'匹配度', '工作状态', '电话', '邮箱', '性别', '年龄',
+'出生年月', '现居住地', '工作经验', '最近工作',
+'最高学历/学位', '个人信息', '目前年收入：',
+'求职意向', '项目经验', '教育经历', '在校情况',
+'技能特长', '操作动态', '附加信息'
+"""
