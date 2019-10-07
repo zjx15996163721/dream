@@ -1,17 +1,55 @@
-import requests
+import numpy as np
 import time
-now_time = lambda: int(round(time.time()*1000))
 
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
-    # 'Cookie': 'adv=adsnew%3D1%26%7C%26adsresume%3D1%26%7C%26adsfrom%3Dhttps%253A%252F%252Fsp0.baidu.com%252F9q9JcDHa2gU2pMbgoY3K%252Fadrc.php%253Ft%253D06KL00c00fDewkY0KKG-00uiAsjdy3wI000007jzr-C00000xDd5wZ.THYdnyGEm6K85yF9pywd0ZnqujmvuymsuAnsnj7bmhRsP6Kd5RDzfWm3fRPAnWTzPDndnbDvnRNjfYcLPYR4fWuAfb7A0ADqI1YhUyPGujY1nWT4njbsPHTdFMKzUvwGujYkP6K-5y9YIZK1rBtEIZF9mvR8PH7JUvc8mvqVQLwzmyP-QMKCTjq9uZP8IyYqnW0sPjc3nBu9pM0qmR9inAPcHHunXH-YmHPwIR4RwM7Bnb-dyHc4IDs1Rh4nnY4_m-n4IvN_rZ-PwDRYHAdCnAFgIzqpUbGvm-fkpN-gUAVbyDcvFh_qn1u-njRYmyDsPjR4m1F-uAfdmWfLuWRLmvcvnHKbrjc0mLFW5HnsP1f4%2526tpl%253Dtpl_11534_19968_16032%2526l%253D1513812560%2526attach%253Dlocation%25253D%252526linkName%25253D%252525E6%252525A0%25252587%252525E5%25252587%25252586%252525E5%252525A4%252525B4%252525E9%25252583%252525A8-%252525E6%252525A0%25252587%252525E9%252525A2%25252598-%252525E4%252525B8%252525BB%252525E6%252525A0%25252587%252525E9%252525A2%25252598%252526linkText%25253D%252525E3%25252580%25252590%252525E5%25252589%2525258D%252525E7%252525A8%2525258B%252525E6%25252597%252525A0%252525E5%252525BF%252525A751Job%252525E3%25252580%25252591-%25252520%252525E5%252525A5%252525BD%252525E5%252525B7%252525A5%252525E4%252525BD%2525259C%252525E5%252525B0%252525BD%252525E5%2525259C%252525A8%252525E5%25252589%2525258D%252525E7%252525A8%2525258B%252525E6%25252597%252525A0%252525E5%252525BF%252525A7%2521%252526xp%25253Did%2528%25252522m3279090575_canvas%25252522%2529%2525252FDIV%2525255B1%2525255D%2525252FDIV%2525255B1%2525255D%2525252FDIV%2525255B1%2525255D%2525252FDIV%2525255B1%2525255D%2525252FDIV%2525255B1%2525255D%2525252FH2%2525255B1%2525255D%2525252FA%2525255B1%2525255D%252526linkType%25253D%252526checksum%25253D220%2526ie%253DUTF-8%2526f%253D8%2526tn%253Dbaidu%2526wd%253D51job%2526rqlang%253Dcn%26%7C%26adsnum%3D2004282; guid=fa1f7d11e1e6c06f95cf8c6fcc300d52; EhireGuid=ef2f1a33bfbd47cbaf3a5f5dd2d8eaa8; LangType=Lang=&Flag=1; RememberLoginInfo=member_name=42C0E5A4273247A0CA6AD9118CC10153&user_name=42C0E5A4273247A0BE39E05CE3F038B97F346A4FD26D49881290FBC4487FA1C3; AccessKey=c883c0284eeb465; ASP.NET_SessionId=1sybhc342e4s0zo3cduqmogv',
-}
-url = 'https://ehire.51job.com/Ajax/Validate/getcaptcha.ashx'
-data = {
-    'ctmname': '上海丰草',
-    'username': '上海丰草文化传播有限公司',
-    'password': 'denglimin11'
-}
-r = requests.post(url, headers, data)
-print(r.text)
+def viterbi(trainsition_probability,emission_probability,pi,obs_seq):
+    #转换为矩阵进行运算
+    trainsition_probability=np.array(trainsition_probability)
+    print(trainsition_probability)
+    emission_probability=np.array(emission_probability)
+    print(emission_probability)
+    pi=np.array(pi)
+    print(pi)
+    obs_seq = [0, 2, 3]
+    # 最后返回一个Row*Col的矩阵结果
+    Row = np.array(trainsition_probability).shape[0]
+    Col = len(obs_seq)
+    #定义要返回的矩阵
+    F=np.zeros((Row,Col))
+    #初始状态
+    F[:,0]=pi*np.transpose(emission_probability[:,obs_seq[0]])
+    print(F[:,0])
+    for t in range(1,Col):
+        list_max=[]
+        print(t)
+        for n in range(Row):
+            print(n)
+            list_x=list(np.array(F[:,t-1])*np.transpose(trainsition_probability[:,n]))
+            print(list_x)
+
+            #获取最大概率
+            list_p=[]
+            for i in list_x:
+                list_p.append(i*10000)
+            list_max.append(max(list_p)/10000)
+        print(list_max)
+        F[:,t]=np.array(list_max)*np.transpose(emission_probability[:,obs_seq[t]])
+        print(F[:,t])
+    # return F
+
+
+if __name__=='__main__':
+    #隐藏状态
+    invisible=['Sunny','Cloud','Rainy']
+    #初始状态
+    pi=[0.63,0.17,0.20]
+    #转移矩阵
+    trainsion_probility=[[0.5,0.375,0.125],[0.25,0.125,0.625],[0.25,0.375,0.375]]
+    #发射矩阵
+    emission_probility=[[0.6,0.2,0.15,0.05],[0.25,0.25,0.25,0.25],[0.05,0.10,0.35,0.5]]
+    #最后显示状态
+    obs_seq=[0,2,3]
+    #最后返回一个Row*Col的矩阵结果
+    F=viterbi(trainsion_probility,emission_probility,pi,obs_seq)
+    print(F)
+
