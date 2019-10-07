@@ -14,6 +14,7 @@ class IndexHandler(RequestHandler):
         self.render('index.html')
 
 
+
 class InfoPageHandler(RequestHandler):
     def post(self):
         name = self.get_argument('name')
